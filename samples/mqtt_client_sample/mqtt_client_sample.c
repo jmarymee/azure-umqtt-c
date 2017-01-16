@@ -12,6 +12,7 @@
 #include "azure_umqtt_c/mqtt_client.h"
 #include "azure_c_shared_utility/socketio.h"
 #include "azure_c_shared_utility/platform.h"
+#include "azure_c_shared_utility\tlsio_apqssl.h"
 
 static const char* TOPIC_NAME_A = "msgA";
 static const char* TOPIC_NAME_B = "msgB";
@@ -167,17 +168,18 @@ void mqtt_client_sample_run()
         else
         {
             MQTT_CLIENT_OPTIONS options = { 0 };
-            options.clientId = "azureiotclient";
+            options.clientId = "APQDevice";
             options.willMessage = NULL;
-            options.username = NULL;
-            options.password = NULL;
+            options.username = "APQIOTHub.azure-devices.net/APQDevice";
+            options.password = "SharedAccessSignature sr=APQIOTHub.azure-devices.net%2Fdevices%2FAPQDevice&sig=lc9cUJi6BMH9KOmLDc%2FVlvhAze1PCBzbwLJ2t1GvdJg%3D&se=1485123188";
             options.keepAliveInterval = 10;
             options.useCleanSession = true;
             options.qualityOfServiceValue = DELIVER_AT_MOST_ONCE;
 
-            SOCKETIO_CONFIG config = {"test.mosquitto.org", PORT_NUM_UNENCRYPTED, NULL};
+            SOCKETIO_CONFIG config = {"protocol-gateway.contoso.com", PORT_NUM_UNENCRYPTED, NULL};
 
-            XIO_HANDLE xio = xio_create(socketio_get_interface_description(), &config);
+            //XIO_HANDLE xio = xio_create(socketio_get_interface_description(), &config);
+			XIO_HANDLE xio = xio_create(tlsio_apqssl_get_interface_description(), &config);
             if (xio == NULL)
             {
                 (void)printf("xio_create failed\r\n");
