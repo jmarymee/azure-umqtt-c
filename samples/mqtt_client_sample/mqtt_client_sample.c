@@ -210,15 +210,15 @@ void mqtt_client_sample_run()
             options.useCleanSession = true;
             options.qualityOfServiceValue = DELIVER_AT_LEAST_ONCE;
 
-            //SOCKETIO_CONFIG config = {"protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED, NULL};
+            SOCKETIO_CONFIG config = {"protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED, NULL};
 
-			const IO_INTERFACE_DESCRIPTION* tlsio_interface = platform_get_default_tlsio();
-			TLSIO_CONFIG config = { "APQIOTHub.azure-devices.net", PORT_NUM_ENCRYPTED };
+			//const IO_INTERFACE_DESCRIPTION* tlsio_interface = platform_get_default_tlsio();
+			//TLSIO_CONFIG config = { "APQIOTHub.azure-devices.net", PORT_NUM_ENCRYPTED };
 			//TLSIO_CONFIG config = { "protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED };
 
             //XIO_HANDLE xio = xio_create(socketio_get_interface_description(), &config);
-			XIO_HANDLE xio = xio_create(tlsio_interface, &config);
-			//XIO_HANDLE xio = xio_create(tlsio_apqssl_get_interface_description(), &config);
+			//XIO_HANDLE xio = xio_create(tlsio_interface, &config);
+			XIO_HANDLE xio = xio_create(tlsio_apqssl_get_interface_description(), &config);
             if (xio == NULL)
             {
                 (void)printf("xio_create failed\r\n");
