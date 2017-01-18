@@ -15,7 +15,7 @@
 #include "azure_c_shared_utility/tlsio_apqssl.h"
 #include "azure_c_shared_utility/tlsio.h"
 
-static const char* TOPIC_SUB_NAME_A = "/devices/APQDevice/messages/devicebound";
+static const char* TOPIC_SUB_NAME_A = "devices/APQDevice/messages/devicebound/#";
 //static const char* TOPIC_SUB_NAME_B = "/devices/APQDevice/messages/devicebound";
 static const char* TOPIC_NAME_A = "/devices/APQDevice/messages/events";
 static const char* TOPIC_NAME_B = "/devices/APQDevice/messages/events";
@@ -69,6 +69,29 @@ static void OnCloseComplete(void* context)
     (void)context;
 
     (void)printf("%d: On Close Connection failed\r\n", __LINE__);
+}
+
+static void SendCannedMessageTest(MQTT_CLIENT_HANDLE handle)
+{
+	MQTT_MESSAGE_HANDLE msg = mqttmessage_create(PACKET_ID_VALUE++, TOPIC_NAME_A, DELIVER_AT_MOST_ONCE, (const uint8_t*)APP_NAME_A, strlen(APP_NAME_A));
+	if (msg == NULL)
+	{
+		(void)printf("%d: mqttmessage_create failed\r\n", __LINE__);
+		g_continue = false;
+	}
+	else
+	{
+		if (mqtt_client_publish(handle, msg))
+		{
+			(void)printf("%d: mqtt_client_publish failed\r\n", __LINE__);
+			g_continue = false;
+		}
+		else
+		{
+			(void)printf("Message A and B sent\r\n");
+		}
+		mqttmessage_destroy(msg);
+	}
 }
 
 static void OnOperationComplete(MQTT_CLIENT_HANDLE handle, MQTT_CLIENT_EVENT_RESULT actionResult, const void* msgInfo, void* callbackCtx)
@@ -187,14 +210,14 @@ void mqtt_client_sample_run()
             options.useCleanSession = true;
             options.qualityOfServiceValue = DELIVER_AT_LEAST_ONCE;
 
-            SOCKETIO_CONFIG config = {"protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED, NULL};
+            //SOCKETIO_CONFIG config = {"protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED, NULL};
 
-			//const IO_INTERFACE_DESCRIPTION* tlsio_interface = platform_get_default_tlsio();
-			//TLSIO_CONFIG config = { "APQIOTHub.azure-devices.net", PORT_NUM_ENCRYPTED };
+			const IO_INTERFACE_DESCRIPTION* tlsio_interface = platform_get_default_tlsio();
+			TLSIO_CONFIG config = { "APQIOTHub.azure-devices.net", PORT_NUM_ENCRYPTED };
 			//TLSIO_CONFIG config = { "protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED };
 
-            XIO_HANDLE xio = xio_create(socketio_get_interface_description(), &config);
-			//XIO_HANDLE xio = xio_create(tlsio_interface, &config);
+            //XIO_HANDLE xio = xio_create(socketio_get_interface_description(), &config);
+			XIO_HANDLE xio = xio_create(tlsio_interface, &config);
 			//XIO_HANDLE xio = xio_create(tlsio_apqssl_get_interface_description(), &config);
             if (xio == NULL)
             {
@@ -219,6 +242,9 @@ void mqtt_client_sample_run()
 							if (key == 'q') {
 								g_continue = false;
 								mqtt_client_disconnect(mqttHandle);
+							}
+							if (key == 's') {
+								SendCannedMessageTest(mqttHandle);
 							}
 						}
                     } while (g_continue);
