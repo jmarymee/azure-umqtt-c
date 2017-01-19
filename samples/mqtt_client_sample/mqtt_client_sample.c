@@ -207,7 +207,7 @@ void mqtt_client_sample_run()
             options.username = "APQIOTHub.azure-devices.net/APQDevice/api-version=2016-11-14";
             options.password = "SharedAccessSignature sr=APQIOTHub.azure-devices.net%2Fdevices%2FAPQDevice&sig=ZV5tzVZqhD5dzyA1A3iCLFRpgY0RF0zsMZnlPRqod3I%3D&se=1485030583";
             options.keepAliveInterval = 10;
-            options.useCleanSession = true;
+            options.useCleanSession = false;
             options.qualityOfServiceValue = DELIVER_AT_LEAST_ONCE;
 
             SOCKETIO_CONFIG config = {"protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED, NULL};
