@@ -212,7 +212,7 @@ void mqtt_client_sample_run()
 
             SOCKETIO_CONFIG config = {"protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED, NULL};
 
-			//const IO_INTERFACE_DESCRIPTION* tlsio_interface = platform_get_default_tlsio();
+			const IO_INTERFACE_DESCRIPTION* tlsio_interface = platform_get_default_tlsio();
 			//TLSIO_CONFIG config = { "APQIOTHub.azure-devices.net", PORT_NUM_ENCRYPTED };
 			//TLSIO_CONFIG config = { "protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED };
 
