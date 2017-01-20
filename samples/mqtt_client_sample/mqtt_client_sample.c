@@ -10,9 +10,10 @@
 #include <conio.h>
 #include "mqtt_client_sample.h"
 #include "azure_umqtt_c/mqtt_client.h"
-#include "azure_c_shared_utility/socketio.h"
+//#include "azure_c_shared_utility/socketio.h"
 #include "azure_c_shared_utility/platform.h"
-#include "azure_c_shared_utility/tlsio_apqssl.h"
+//#include "azure_c_shared_utility/tlsio_apqssl.h"
+#include "azure_c_shared_utility/tlsio_dcm.h"
 #include "azure_c_shared_utility/tlsio.h"
 
 static const char* TOPIC_SUB_NAME_A = "devices/APQDevice/messages/devicebound/#";
@@ -210,15 +211,15 @@ void mqtt_client_sample_run()
             options.useCleanSession = false;
             options.qualityOfServiceValue = DELIVER_AT_LEAST_ONCE;
 
-            SOCKETIO_CONFIG config = {"protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED, NULL};
+            //SOCKETIO_CONFIG config = {"protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED, NULL};
 
-			const IO_INTERFACE_DESCRIPTION* tlsio_interface = platform_get_default_tlsio();
+			//const IO_INTERFACE_DESCRIPTION* tlsio_interface = platform_get_default_tlsio();
 			//TLSIO_CONFIG config = { "APQIOTHub.azure-devices.net", PORT_NUM_ENCRYPTED };
-			//TLSIO_CONFIG config = { "protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED };
+			TLSIO_CONFIG config = { "protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED };
 
             //XIO_HANDLE xio = xio_create(socketio_get_interface_description(), &config);
 			//XIO_HANDLE xio = xio_create(tlsio_interface, &config);
-			XIO_HANDLE xio = xio_create(tlsio_apqssl_get_interface_description(), &config);
+			XIO_HANDLE xio = xio_create(tlsio_dcm_get_interface_description(), &config);
             if (xio == NULL)
             {
                 (void)printf("xio_create failed\r\n");
