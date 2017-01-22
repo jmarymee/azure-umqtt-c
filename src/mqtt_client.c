@@ -1098,6 +1098,9 @@ void mqtt_client_dowork(MQTT_CLIENT_HANDLE handle)
         /*Codes_SRS_MQTT_CLIENT_07_024: [mqtt_client_dowork shall call the xio_dowork function to complete operations.]*/
         xio_dowork(mqtt_client->xioHandle);
 
+		//Debug
+		//if (mqtt_client->socketConnected) { mqtt_client->clientConnected = true; }
+
         /*Codes_SRS_MQTT_CLIENT_07_025: [mqtt_client_dowork shall retrieve the the last packet send value and ...]*/
         if (mqtt_client->socketConnected && mqtt_client->clientConnected && mqtt_client->keepAliveInterval > 0)
         {
