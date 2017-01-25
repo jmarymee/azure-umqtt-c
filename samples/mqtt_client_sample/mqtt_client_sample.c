@@ -206,14 +206,14 @@ void mqtt_client_sample_run()
             options.clientId = "APQDevice";
             options.willMessage = NULL;
             options.username = "APQIOTHub.azure-devices.net/APQDevice/api-version=2016-11-14";
-            options.password = "SharedAccessSignature sr=APQIOTHub.azure-devices.net%2Fdevices%2FAPQDevice&sig=jF5Le%2FkcYYaZ64tMf9WazD0myKQ3M3NnpisP%2FS8oAeU%3D&se=1486048842";
+            options.password = "SharedAccessSignature sr=APQIOTHub.azure-devices.net%2Fdevices%2FAPQDevice&sig=el2gxK5k4yyoeIylhhPKPIacFJsIgDfOrhjAMqr3mjc%3D&se=1485988317";
             options.keepAliveInterval = 10;
-            options.useCleanSession = false;
+            options.useCleanSession = true;
             options.qualityOfServiceValue = DELIVER_AT_LEAST_ONCE;
 
             //SOCKETIO_CONFIG config = {"protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED, NULL};
 
-			const IO_INTERFACE_DESCRIPTION* tlsio_interface = platform_get_default_tlsio();
+			//const IO_INTERFACE_DESCRIPTION* tlsio_interface = platform_get_default_tlsio();
 			//TLSIO_CONFIG config = { "APQIOTHub.azure-devices.net", PORT_NUM_ENCRYPTED };
 			TLSIO_CONFIG config = { "protocol-gateway.contoso.com", PORT_NUM_ENCRYPTED };
 
