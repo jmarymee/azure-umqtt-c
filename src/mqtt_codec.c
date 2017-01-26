@@ -460,7 +460,7 @@ static int constructConnPayload(BUFFER_HANDLE ctrlPacket, const MQTT_CLIENT_OPTI
             iterator += currLen;
             byteutil_writeUTF(&iterator, mqttOptions->clientId, (uint16_t)clientLen);
 
-            // TODO: Read on the Will Topic
+            // Read on the Will Topic
             if (willMessageLen > USHRT_MAX || willTopicLen > USHRT_MAX || usernameLen > USHRT_MAX || passwordLen > USHRT_MAX)
             {
                 result = __LINE__;
@@ -505,7 +505,7 @@ static int constructConnPayload(BUFFER_HANDLE ctrlPacket, const MQTT_CLIENT_OPTI
                         (void)STRING_sprintf(connect_payload_trace, " | PWD: XXXX");
                     }
                 }
-                // TODO: Get the rest of the flags
+                // Get the rest of the flags
                 if (trace_log != NULL)
                 {
                     (void)STRING_sprintf(connect_payload_trace, " | CLEAN: %s", mqttOptions->useCleanSession ? "1" : "0");
