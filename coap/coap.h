@@ -1,6 +1,10 @@
 #ifndef __SIMPLE_COAP_H__
 #define __SIMPLE_COAP_H__
 
+#ifdef __cplusplus
+#include <cstdint>
+extern "C" {
+
 #define MAX_CALLBACK 10
 
 #define COAP_HEADER_SIZE 4
@@ -16,11 +20,8 @@
 #ifdef WIN32
 #include <WinSock2.h>
 #include <inttypes.h>
-//typedef unsigned short int uint8_t;
-//typedef unsigned int uint16_t;
-//typedef unsigned int uint32_t;
 typedef in_addr IPAddress;
-typedef WSAData UDP;
+//typedef WSAData UDP;
 #endif
 
 typedef enum {
@@ -88,56 +89,64 @@ typedef enum {
 	COAP_APPLICATION_JSON = 50
 } COAP_CONTENT_TYPE;
 
-class CoapOption {
-public:
-	uint8_t number;
-	uint8_t length;
-	uint8_t *buffer;
-};
+	class CoapOption {
+	public:
+		uint8_t number;
+		uint8_t length;
+		uint8_t *buffer;
+	};
 
-class CoapPacket {
-public:
-	uint8_t type;
-	uint8_t code;
-	uint8_t *token;
-	uint8_t tokenlen;
-	uint8_t *payload;
-	uint8_t payloadlen;
-	uint16_t messageid;
+	class CoapPacket {
+	public:
+		uint8_t type;
+		uint8_t code;
+		uint8_t *token;
+		uint8_t tokenlen;
+		uint8_t *payload;
+		uint8_t payloadlen;
+		uint16_t messageid;
 
-	uint8_t optionnum;
-	CoapOption options[MAX_OPTION_NUM];
-};
-typedef void(*callback)(CoapPacket &, IPAddress, int);
+		uint8_t optionnum;
+		CoapOption options[MAX_OPTION_NUM];
+	};
+	typedef void(*callback)(CoapPacket &, IPAddress, int);
 
-class Coap {
-private:
-	UDP *_udp;
+	class Coap {
+	private:
+		// *_udp;
+		WSADATA _wsa;
 
-	callback resp;
-	int _port;
+		struct sockaddr_in si_other;
 
-	uint16_t sendPacket(CoapPacket &packet, IPAddress ip);
-	uint16_t sendPacket(CoapPacket &packet, IPAddress ip, int port);
-	int parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf, size_t buflen);
+		int s, slen;
 
-public:
-	Coap();
-	bool start();
-	bool start(int port);
-	void response(callback c) { resp = c; }
+		callback resp;
+		int _port;
 
-	uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid);
-	uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid, char *payload);
-	uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid, char *payload, int payloadlen);
-	uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid, char *payload, int payloadlen, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, uint8_t *token, int tokenlen);
+		uint16_t sendPacket(CoapPacket &packet, IPAddress ip);
+		uint16_t sendPacket(CoapPacket &packet, IPAddress ip, int port);
+		int parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf, size_t buflen);
 
-	uint16_t get(IPAddress ip, int port, char *url);
-	uint16_t put(IPAddress ip, int port, char *url, char *payload);
-	uint16_t put(IPAddress ip, int port, char *url, char *payload, int payloadlen);
-	uint16_t send(IPAddress ip, int port, char *url, COAP_TYPE type, COAP_METHOD method, uint8_t *token, uint8_t tokenlen, uint8_t *payload, uint32_t payloadlen);
+	public:
+		Coap();
+		bool start();
+		bool start(int port);
+		void response(callback c) { resp = c; }
 
-	bool loop();
-};
+		uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid);
+		uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid, char *payload);
+		uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid, char *payload, int payloadlen);
+		uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid, char *payload, int payloadlen, COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, uint8_t *token, int tokenlen);
 
+		uint16_t get(IPAddress ip, int port, char *url);
+		uint16_t put(IPAddress ip, int port, char *url, char *payload);
+		uint16_t put(IPAddress ip, int port, char *url, char *payload, int payloadlen);
+		uint16_t send(IPAddress ip, int port, char *url, COAP_TYPE type, COAP_METHOD method, uint8_t *token, uint8_t tokenlen, uint8_t *payload, uint32_t payloadlen);
+
+		bool loop();
+	};
+#ifdef __cplusplus
+}
+#endif // __cplusplus
+#endif
 #endif
