@@ -15,7 +15,7 @@
 
 #define SERVER "127.0.0.1"  //ip address of udp server
 #define BUFLEN 512  //Max length of buffer
-#define PORT 8888   //The port on which to listen for incoming data
+#define PORT 5683   //The port on which to listen for incoming data
 
 Coap::Coap() {
 	WSAData wsa;
@@ -111,7 +111,7 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) {
 		packetSize += 1 + packet.payloadlen;
 	}
 
-	//TODO: This is the area that actually sends the packet
+	//TODO: This is the area that actually sends the packet. We are using a WinSock-specific send right below  this ins the SendTo function/method
 	//_udp->beginPacket(ip, port);
 	//_udp->write(buffer, packetSize);
 	//_udp->endPacket();
@@ -152,6 +152,10 @@ uint16_t Coap::send(IPAddress ip, int port, char *url, COAP_TYPE type, COAP_METH
 
 uint16_t Coap::put(IPAddress ip, int port, char *url, char *payload) {
 	return this->send(ip, port, url, COAP_CON, COAP_PUT, NULL, 0, (uint8_t *)payload, strlen(payload));
+}
+
+uint16_t Coap::get(IPAddress ip, int port, char *url) {
+	return this->send(ip, port, url, COAP_CON, COAP_GET, NULL, 0, NULL, 0);
 }
 
 
