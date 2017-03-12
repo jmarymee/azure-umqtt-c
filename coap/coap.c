@@ -25,7 +25,7 @@ Coap::Coap() {
 	s, slen = sizeof(si_other);
 
 	//create socket
-	if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR)
+	if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR) //Parms for a UDP Datagram
 	{
 		printf("socket() failed with error code : %d", WSAGetLastError());
 		exit(EXIT_FAILURE);
@@ -35,10 +35,12 @@ Coap::Coap() {
 	memset((char *)&si_other, 0, sizeof(si_other));
 	si_other.sin_family = AF_INET;
 	si_other.sin_port = htons(PORT);
-	si_other.sin_addr.S_un.S_addr = inet_addr(SERVER);
+	//si_other.sin_addr.S_un.S_addr = inet_addr(SERVER); //Done in Send call now
 }
 
 uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) {
+
+	si_other.sin_addr.S_un.S_addr = inet_addr(ip.ip);
 
 	uint8_t buffer[BUF_MAX_SIZE];
 	uint8_t *p = buffer;

@@ -20,7 +20,10 @@ extern "C" {
 #ifdef WIN32
 #include <WinSock2.h>
 #include <inttypes.h>
-typedef in_addr IPAddress;
+typedef struct IPAddr {
+	const char* ip;
+};
+typedef IPAddr IPAddress;
 //typedef WSAData UDP;
 #endif
 

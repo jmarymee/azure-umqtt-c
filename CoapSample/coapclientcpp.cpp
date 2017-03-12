@@ -6,6 +6,7 @@ int main(void)
 {
 	Coap* coap = new Coap();
 	IPAddress address;
-	//coap->put(IPAddress(192, 168, 0, 100), 5683, "light", "0");
+	address.ip = "127.0.0.1";
+	coap->put(address, 5683, "light", "0");
 
 }
