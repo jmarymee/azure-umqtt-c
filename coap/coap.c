@@ -129,6 +129,8 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) {
 		exit(EXIT_FAILURE);
 	}
 
+	_udp->sendDatagram(s, (char*)buffer, packetSize, 0, (struct sockaddr *) &si_other, slen);
+
 	return packet.messageid;
 }
 
@@ -363,6 +365,29 @@ bool Coap::loop() {
 
 
 //These are the routines to read an incoming UDP Packet
+UDP::UDP()
+{
+	WSAData wsa;
+	WSAStartup(MAKEWORD(2, 2), &wsa);
+	this->_wsa = wsa;
+	s, slen = sizeof(si_other);
+	s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+	//setup address structure
+	memset((char *)&si_other, 0, sizeof(si_other));
+	si_other.sin_family = AF_INET;
+	si_other.sin_port = htons(PORT);
+}
+
+uint8_t UDP::SetIPAddress(IPAddress ipaddr) {
+
+	si_other.sin_addr.S_un.S_addr = inet_addr(ipaddr.ip);
+	return 0;
+}
+
+uint16_t UDP::sendDatagram(SOCKET s, char *buffer, uint16_t bufferLen, uint16_t flags, struct sockaddr *sockAddr, uint16_t toLen) {
+	return sendto(s, (char*)buffer, bufferLen, 0, (struct sockaddr *) &si_other, toLen);
+}
 uint32_t UDP::read(uint8_t *buffer, uint32_t packetlen) {
 	return 0;
 }

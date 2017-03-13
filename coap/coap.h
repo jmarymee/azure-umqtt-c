@@ -97,10 +97,22 @@
 
 	class UDP {
 	public:
+		UDP();
 		uint32_t read(uint8_t *buffer, uint32_t packetlen);
+		//sendto(s, (char*)buffer, packetSize, 0, (struct sockaddr *) &si_other, slen)
+		uint16_t sendDatagram(SOCKET s, char *buffer, uint16_t bufferLen, uint16_t flags, struct sockaddr *sockAddr, uint16_t toLen);
+		//uint16_t sendPacket(CoapPacket &packet, IPAddress ip, int port);
 		uint32_t parsePacket();
 		IPAddress remoteIP();
 		uint32_t remotePort();
+		uint8_t SetIPAddress(IPAddress ipaddr);
+	private:
+		WSADATA _wsa;
+		struct sockaddr_in si_other;
+		uint16_t s;
+		uint16_t slen;
+		int _port;
+		IPAddress _ipAddress;
 	};
 
 	class CoapOption {
