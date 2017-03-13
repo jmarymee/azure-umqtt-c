@@ -1,4 +1,2 @@
-﻿  coapclientcpp.cpp
-c:\repos\azure-umqtt-c\coap\coap.h(25): warning C4091: 'typedef ': ignored on left of 'IPAddr' when no variable is declared
-  CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.exe
+﻿  CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.exe
   CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.pdb (Full PDB)
