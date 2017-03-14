@@ -22,31 +22,33 @@
 #define PORT 5683   //The port on which to listen for incoming data
 
 Coap::Coap() {
-	WSAData wsa;
-	WSAStartup(MAKEWORD(2, 2), &wsa);
-	this->_wsa = wsa;
+	//WSAData wsa;
+	//WSAStartup(MAKEWORD(2, 2), &wsa);
+	//this->_wsa = wsa;
 
 	_udp = new UDP();
 
-	s, slen = sizeof(si_other);
+	//s, slen = sizeof(si_other);
 
 	//create socket
-	if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR) //Parms for a UDP Datagram
-	{
-		printf("socket() failed with error code : %d", WSAGetLastError());
-		exit(EXIT_FAILURE);
-	}
+	//if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR) //Parms for a UDP Datagram
+	//{
+	//	printf("socket() failed with error code : %d", WSAGetLastError());
+	//	exit(EXIT_FAILURE);
+	//}
 
 	//setup address structure
-	memset((char *)&si_other, 0, sizeof(si_other));
-	si_other.sin_family = AF_INET;
-	si_other.sin_port = htons(PORT);
+	//memset((char *)&si_other, 0, sizeof(si_other));
+	//si_other.sin_family = AF_INET;
+	//si_other.sin_port = htons(PORT);
+	
 	//si_other.sin_addr.S_un.S_addr = inet_addr(SERVER); //Done in Send call now
 }
 
 uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) {
 
-	si_other.sin_addr.S_un.S_addr = inet_addr(ip.ip);
+	//si_other.sin_addr.S_un.S_addr = inet_addr(ip.ip);
+	_udp->SetIPAddress(ip); //Tells the UDP client where we want to connect
 
 	uint8_t buffer[BUF_MAX_SIZE];
 	uint8_t *p = buffer;
@@ -123,13 +125,18 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) {
 	//_udp->endPacket();
 
 	//send the message
-	if (sendto(s, (char*)buffer, packetSize, 0, (struct sockaddr *) &si_other, slen) == SOCKET_ERROR)
+	//if (sendto(s, (char*)buffer, packetSize, 0, (struct sockaddr *) &si_other, slen) == SOCKET_ERROR)
+	//{
+	//	printf("sendto() failed with error code : %d", WSAGetLastError());
+	//	exit(EXIT_FAILURE);
+	//}
+
+	//Send message via the UDP class now
+	if (_udp->sendDatagram((char*)buffer, packetSize, 0, slen) == SOCKET_ERROR)
 	{
 		printf("sendto() failed with error code : %d", WSAGetLastError());
 		exit(EXIT_FAILURE);
 	}
-
-	_udp->sendDatagram(s, (char*)buffer, packetSize, 0, (struct sockaddr *) &si_other, slen);
 
 	return packet.messageid;
 }
@@ -203,7 +210,7 @@ uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageid, char *pa
 int Coap::parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf, size_t buflen) {
 	uint8_t *p = *buf;
 	uint8_t headlen = 1;
-	uint16_t len, delta;
+	uint8_t len, delta;
 
 	if (buflen < headlen) return -1;
 
@@ -379,14 +386,22 @@ UDP::UDP()
 	si_other.sin_port = htons(PORT);
 }
 
-uint8_t UDP::SetIPAddress(IPAddress ipaddr) {
+UDP::~UDP()
+{
+	WSACleanup(); //Cleans up the Winsock2 stuff
+}
+
+uint8_t UDP::SetIPAddress(IPAddress ipaddr) 
+{
 
 	si_other.sin_addr.S_un.S_addr = inet_addr(ipaddr.ip);
 	return 0;
 }
 
-uint16_t UDP::sendDatagram(SOCKET s, char *buffer, uint16_t bufferLen, uint16_t flags, struct sockaddr *sockAddr, uint16_t toLen) {
-	return sendto(s, (char*)buffer, bufferLen, 0, (struct sockaddr *) &si_other, toLen);
+uint16_t UDP::sendDatagram(char *buffer, uint16_t bufferLen, uint16_t flags, uint16_t toLen) 
+{
+	uint16_t sockErr = sendto(this->s, (char*)buffer, bufferLen, 0, (struct sockaddr *) &si_other, this->slen);
+	return sockErr;
 }
 uint32_t UDP::read(uint8_t *buffer, uint32_t packetlen) {
 	return 0;

@@ -1,2 +1,3 @@
-﻿  CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.exe
+﻿  coapclientcpp.cpp
+  CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.exe
   CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.pdb (Full PDB)

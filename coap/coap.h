@@ -23,8 +23,8 @@
 #include <cstring>
 	typedef struct IPAddr {
 		const char* ip;
-	};
-	typedef IPAddr IPAddress;
+	} IPAddress;
+	//typedef IPAddr IPAddress;
 	//typedef WSAData UDP;
 #endif
 
@@ -98,9 +98,10 @@
 	class UDP {
 	public:
 		UDP();
+		~UDP();
 		uint32_t read(uint8_t *buffer, uint32_t packetlen);
 		//sendto(s, (char*)buffer, packetSize, 0, (struct sockaddr *) &si_other, slen)
-		uint16_t sendDatagram(SOCKET s, char *buffer, uint16_t bufferLen, uint16_t flags, struct sockaddr *sockAddr, uint16_t toLen);
+		uint16_t sendDatagram(char *buffer, uint16_t bufferLen, uint16_t flags, uint16_t toLen);
 		//uint16_t sendPacket(CoapPacket &packet, IPAddress ip, int port);
 		uint32_t parsePacket();
 		IPAddress remoteIP();
@@ -146,9 +147,10 @@
 
 		std::map<std::string, callback> uri;
 
-		struct sockaddr_in si_other;
+		//struct sockaddr_in si_other;
 
-		int s, slen;
+		//int s, slen;
+		int slen;
 
 		callback resp;
 		int _port;
