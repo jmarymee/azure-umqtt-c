@@ -1,3 +1,4 @@
 ﻿  coapclientcpp.cpp
+c:\repos\azure-umqtt-c\coapsample\coapclientcpp.cpp(22): warning C4101: 'e': unreferenced local variable
   CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.exe
   CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.pdb (Full PDB)

@@ -110,10 +110,12 @@
 	private:
 		WSADATA _wsa;
 		struct sockaddr_in si_other;
+		struct sockaddr_in server;
 		uint16_t s;
-		uint16_t slen;
+		int slen, _recvlen;
 		int _port;
 		IPAddress _ipAddress;
+		char* udpDataBuffer;
 	};
 
 	class CoapOption {

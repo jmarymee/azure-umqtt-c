@@ -41,7 +41,7 @@ Coap::Coap() {
 	//memset((char *)&si_other, 0, sizeof(si_other));
 	//si_other.sin_family = AF_INET;
 	//si_other.sin_port = htons(PORT);
-	
+
 	//si_other.sin_addr.S_un.S_addr = inet_addr(SERVER); //Done in Send call now
 }
 
@@ -169,6 +169,11 @@ uint16_t Coap::send(IPAddress ip, int port, char *url, COAP_TYPE type, COAP_METH
 	return this->sendPacket(packet, ip, port);
 }
 
+//uint16_t Coap::loop()
+//{
+//	return uint16_t();
+//}
+
 uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageid, char *payload, int payloadlen,
 	COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, uint8_t *token, int tokenlen) {
 	// make packet
@@ -268,7 +273,8 @@ uint16_t Coap::get(IPAddress ip, int port, char *url) {
 	return this->send(ip, port, url, COAP_CON, COAP_GET, NULL, 0, NULL, 0);
 }
 
-bool Coap::loop() {
+bool Coap::loop()
+{
 
 	uint8_t buffer[BUF_MAX_SIZE];
 	int32_t packetlen = _udp->parsePacket();
@@ -377,38 +383,77 @@ UDP::UDP()
 	WSAData wsa;
 	WSAStartup(MAKEWORD(2, 2), &wsa);
 	this->_wsa = wsa;
-	s, slen = sizeof(si_other);
+	slen = sizeof(si_other);
 	s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-	//setup address structure
+	//setup address structure for data/info on the other end
 	memset((char *)&si_other, 0, sizeof(si_other));
-	si_other.sin_family = AF_INET;
-	si_other.sin_port = htons(PORT);
+	//si_other.sin_family = AF_INET;
+	//si_other.sin_port = htons(PORT);
+
+	//Setup the remote end info
+	memset((char*)&server, 0, sizeof(server));
+	server.sin_family = AF_INET;
+	server.sin_addr.s_addr = INADDR_ANY;
+	server.sin_port = htons(PORT); //COAP Port
+
+	//Now bind the socket
+	if (bind(s, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
+	{
+		printf("Bind failed with error code : %d", WSAGetLastError());
+		//exit(EXIT_FAILURE);
+	}
 }
 
 UDP::~UDP()
 {
+	closesocket(this->s);
 	WSACleanup(); //Cleans up the Winsock2 stuff
 }
 
-uint8_t UDP::SetIPAddress(IPAddress ipaddr) 
+uint8_t UDP::SetIPAddress(IPAddress ipaddr)
 {
-
-	si_other.sin_addr.S_un.S_addr = inet_addr(ipaddr.ip);
+	//si_other.sin_addr.S_un.S_addr = inet_addr(ipaddr.ip);
 	return 0;
 }
 
-uint16_t UDP::sendDatagram(char *buffer, uint16_t bufferLen, uint16_t flags, uint16_t toLen) 
+uint16_t UDP::sendDatagram(char *buffer, uint16_t bufferLen, uint16_t flags, uint16_t toLen)
 {
 	uint16_t sockErr = sendto(this->s, (char*)buffer, bufferLen, 0, (struct sockaddr *) &si_other, this->slen);
 	return sockErr;
 }
 uint32_t UDP::read(uint8_t *buffer, uint32_t packetlen) {
-	return 0;
+	if (udpDataBuffer == nullptr) { return -1; } //No data waiting. ParsePacket hasn't been called yet
+	memcpy((char*)buffer, udpDataBuffer, _recvlen);
+	free(udpDataBuffer);
+	udpDataBuffer = nullptr;
+	return _recvlen;
 }
 
-uint32_t UDP::parsePacket() {
-	return 0;
+//Currently attempt to read a UDP packet as a blocking call
+uint32_t UDP::parsePacket() 
+{
+	_recvlen = 0;
+	udpDataBuffer = (char*) malloc(BUFLEN);
+	//char buf[BUFLEN];
+	memset(udpDataBuffer, '\0', BUFLEN); //Ensure buffer is empty
+
+	_recvlen = recvfrom(s, udpDataBuffer, BUFLEN, 0, (struct sockaddr *) &si_other, &slen);
+	//try to receive some data, this is a blocking call
+	if (_recvlen == SOCKET_ERROR)
+	{
+		printf("recvfrom() failed with error code : %d", WSAGetLastError());
+		//exit(EXIT_FAILURE);
+	}
+	else
+	{
+
+		//print details of the client/peer and the data received
+		printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
+		printf("Data: %s\n", udpDataBuffer);
+	}
+
+	return _recvlen;
 }
 
 IPAddress UDP::remoteIP() {
