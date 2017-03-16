@@ -1,14 +1,14 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include <stdlib.h>
-#include "azure_c_shared_utility/gballoc.h"
-#include "azure_c_shared_utility/platform.h"
-#include "azure_c_shared_utility/tickcounter.h"
-#include "azure_c_shared_utility/crt_abstractions.h"
-#include "azure_c_shared_utility/xlogging.h"
-#include "azure_c_shared_utility/strings.h"
-#include "azure_c_shared_utility/agenttime.h"
-#include "azure_c_shared_utility/threadapi.h"
+//#include "azure_c_shared_utility/gballoc.h"
+//#include "azure_c_shared_utility/platform.h"
+//#include "azure_c_shared_utility/tickcounter.h"
+//#include "azure_c_shared_utility/crt_abstractions.h"
+//#include "azure_c_shared_utility/xlogging.h"
+//#include "azure_c_shared_utility/strings.h"
+//#include "azure_c_shared_utility/agenttime.h"
+//#include "azure_c_shared_utility/threadapi.h"
 
 #include <iostream>
 #include <map>
@@ -18,31 +18,13 @@
 #include "coap.h"
 
 #define SERVER "127.0.0.1"  //ip address of udp server
-#define BUFLEN 512  //Max length of buffer
+//#define BUFLEN 512  //Max length of buffer
 #define PORT 5683   //The port on which to listen for incoming data
 
-Coap::Coap() {
-	//WSAData wsa;
-	//WSAStartup(MAKEWORD(2, 2), &wsa);
-	//this->_wsa = wsa;
-
+Coap::Coap() 
+{
 	_udp = new UDP();
-
-	//s, slen = sizeof(si_other);
-
-	//create socket
-	//if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == SOCKET_ERROR) //Parms for a UDP Datagram
-	//{
-	//	printf("socket() failed with error code : %d", WSAGetLastError());
-	//	exit(EXIT_FAILURE);
-	//}
-
-	//setup address structure
-	//memset((char *)&si_other, 0, sizeof(si_other));
-	//si_other.sin_family = AF_INET;
-	//si_other.sin_port = htons(PORT);
-
-	//si_other.sin_addr.S_un.S_addr = inet_addr(SERVER); //Done in Send call now
+	//_udp->fnPtrCoapDatagramReceived = this->CoapDatagramReceived;
 }
 
 uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) {
@@ -50,7 +32,7 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) {
 	//si_other.sin_addr.S_un.S_addr = inet_addr(ip.ip);
 	_udp->SetIPAddress(ip); //Tells the UDP client where we want to connect
 
-	uint8_t buffer[BUF_MAX_SIZE];
+	uint8_t buffer[COAP_MAX_DATAGRAM_SIZE];
 	uint8_t *p = buffer;
 	uint16_t running_delta = 0;
 	uint16_t packetSize = 0;
@@ -77,7 +59,7 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) {
 		uint32_t optdelta;
 		uint8_t len, delta;
 
-		if (packetSize + 5 + packet.options[i].length >= BUF_MAX_SIZE) {
+		if (packetSize + 5 + packet.options[i].length >= COAP_MAX_DATAGRAM_SIZE) {
 			return 0;
 		}
 		optdelta = packet.options[i].number - running_delta;
@@ -111,7 +93,7 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) {
 
 	// make payload
 	if (packet.payloadlen > 0) {
-		if ((packetSize + 1 + packet.payloadlen) >= BUF_MAX_SIZE) {
+		if ((packetSize + 1 + packet.payloadlen) >= COAP_MAX_DATAGRAM_SIZE) {
 			return 0;
 		}
 		*p++ = 0xFF;
@@ -119,23 +101,10 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) {
 		packetSize += 1 + packet.payloadlen;
 	}
 
-	//TODO: This is the area that actually sends the packet. We are using a WinSock-specific send right below  this ins the SendTo function/method
-	//_udp->beginPacket(ip, port);
-	//_udp->write(buffer, packetSize);
-	//_udp->endPacket();
-
-	//send the message
-	//if (sendto(s, (char*)buffer, packetSize, 0, (struct sockaddr *) &si_other, slen) == SOCKET_ERROR)
-	//{
-	//	printf("sendto() failed with error code : %d", WSAGetLastError());
-	//	exit(EXIT_FAILURE);
-	//}
-
-	//Send message via the UDP class now
+	//Send message via the UDP class
 	if (_udp->sendDatagram((char*)buffer, packetSize, 0, slen) == SOCKET_ERROR)
 	{
 		printf("sendto() failed with error code : %d", WSAGetLastError());
-		exit(EXIT_FAILURE);
 	}
 
 	return packet.messageid;
@@ -169,11 +138,6 @@ uint16_t Coap::send(IPAddress ip, int port, char *url, COAP_TYPE type, COAP_METH
 	return this->sendPacket(packet, ip, port);
 }
 
-//uint16_t Coap::loop()
-//{
-//	return uint16_t();
-//}
-
 uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageid, char *payload, int payloadlen,
 	COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, uint8_t *token, int tokenlen) {
 	// make packet
@@ -198,6 +162,11 @@ uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageid, char *pa
 	packet.optionnum++;
 
 	return this->sendPacket(packet, ip, port);
+}
+
+void CoapDatagramReceived(const unsigned char * buffer, size_t size)
+{
+	//throw (std::exception("Not implemented"));
 }
 
 uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageid) {
@@ -275,12 +244,11 @@ uint16_t Coap::get(IPAddress ip, int port, char *url) {
 
 bool Coap::loop()
 {
-
-	uint8_t buffer[BUF_MAX_SIZE];
+	uint8_t buffer[COAP_MAX_DATAGRAM_SIZE];
 	int32_t packetlen = _udp->parsePacket();
 
 	while (packetlen > 0) {
-		packetlen = _udp->read(buffer, packetlen >= BUF_MAX_SIZE ? BUF_MAX_SIZE : packetlen);
+		packetlen = _udp->read(buffer, packetlen >= COAP_MAX_DATAGRAM_SIZE ? COAP_MAX_DATAGRAM_SIZE : packetlen);
 
 		CoapPacket packet;
 
@@ -347,11 +315,7 @@ bool Coap::loop()
 					url += urlname;
 				}
 			}
-#if defined(ARDUINO)
-			if (!uri.find(url)) {
-#elif defined(SPARK)
-			if (uri.find(url) == uri.end()) {
-#elif defined(WIN32)
+#if defined(WIN32)
 			//if (!uri.find(url)) {
 			if (uri.find(url) == uri.end()) {
 #endif
@@ -359,11 +323,7 @@ bool Coap::loop()
 					COAP_NOT_FOUNT, COAP_NONE, NULL, 0);
 			}
 			else {
-#if defined(ARDUINO)
-				uri.find(url)(packet, _udp->remoteIP(), _udp->remotePort());
-#elif defined(SPARK)
-				uri[url](packet, _udp->remoteIP(), _udp->remotePort());
-#elif defined(WIN32)
+#if defined(WIN32)
 				uri[url](packet, _udp->remoteIP(), _udp->remotePort());
 #endif
 			}
@@ -377,7 +337,7 @@ bool Coap::loop()
 }
 
 
-//These are the routines to read an incoming UDP Packet
+//These are the routines to read and send UDP Datagrams
 UDP::UDP()
 {
 	WSAData wsa;
@@ -388,8 +348,6 @@ UDP::UDP()
 
 	//setup address structure for data/info on the other end
 	memset((char *)&si_other, 0, sizeof(si_other));
-	//si_other.sin_family = AF_INET;
-	//si_other.sin_port = htons(PORT);
 
 	//Setup the remote end info
 	memset((char*)&server, 0, sizeof(server));
@@ -403,6 +361,11 @@ UDP::UDP()
 		printf("Bind failed with error code : %d", WSAGetLastError());
 		//exit(EXIT_FAILURE);
 	}
+
+	//Now put into non-blocking mode
+	//u_long iMode = NONBLOCKING; //nonzero for non-blocking, zero (default) for blocking
+	u_long iMode = BLOCKING; //nonzero for non-blocking, zero (default) for blocking
+	int ccode = ioctlsocket(s, FIONBIO, &iMode);
 }
 
 UDP::~UDP()
@@ -434,11 +397,11 @@ uint32_t UDP::read(uint8_t *buffer, uint32_t packetlen) {
 uint32_t UDP::parsePacket() 
 {
 	_recvlen = 0;
-	udpDataBuffer = (char*) malloc(BUFLEN);
+	udpDataBuffer = (char*) malloc(COAP_MAX_DATAGRAM_SIZE);
 	//char buf[BUFLEN];
-	memset(udpDataBuffer, '\0', BUFLEN); //Ensure buffer is empty
+	memset(udpDataBuffer, '\0', COAP_MAX_DATAGRAM_SIZE); //Ensure buffer is empty
 
-	_recvlen = recvfrom(s, udpDataBuffer, BUFLEN, 0, (struct sockaddr *) &si_other, &slen);
+	_recvlen = recvfrom(s, udpDataBuffer, COAP_MAX_DATAGRAM_SIZE, 0, (struct sockaddr *) &si_other, &slen);
 	//try to receive some data, this is a blocking call
 	if (_recvlen == SOCKET_ERROR)
 	{
@@ -447,10 +410,11 @@ uint32_t UDP::parsePacket()
 	}
 	else
 	{
-
 		//print details of the client/peer and the data received
 		printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
 		printf("Data: %s\n", udpDataBuffer);
+
+		this->fnPtrCoapDatagramReceived((const unsigned char*)udpDataBuffer, _recvlen); //Calls the function prt friend function
 	}
 
 	return _recvlen;

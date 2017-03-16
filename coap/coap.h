@@ -1,6 +1,8 @@
 #ifndef __SIMPLE_COAP_H__
 #define __SIMPLE_COAP_H__
 
+//#pragma warning( disable : 4430 3646) 
+
 //#ifdef __cplusplus
 //#include <cstdint>
 //extern "C" {
@@ -11,11 +13,15 @@
 #define COAP_OPTION_HEADER_SIZE 1
 #define COAP_PAYLOAD_MARKER 0xFF
 #define MAX_OPTION_NUM 10
-#define BUF_MAX_SIZE 50
+//#define BUF_MAX_SIZE 50
+#define COAP_MAX_DATAGRAM_SIZE 1152 //RFC7252 4.6 (https://tools.ietf.org/html/rfc7252#section-4.6)
 #define COAP_DEFAULT_PORT 5683
 
 #define RESPONSE_CODE(class, detail) ((class << 5) | (detail))
 #define COAP_OPTION_DELTA(v, n) (v < 13 ? (*n = (0xFF & v)) : (v <= 0xFF + 13 ? (*n = 13) : (*n = 14)))
+
+//typedef void(*ON_MQTT_OPERATION_CALLBACK)(MQTT_CLIENT_HANDLE handle, MQTT_CLIENT_EVENT_RESULT actionResult, const void* msgInfo, void* callbackCtx);
+typedef void(*ON_COAP_DATAGRAM_RECEIVED)(const unsigned char* buffer, size_t size); //Used to tell the UDP Object where to send the datagram
 
 #ifdef WIN32
 #include <WinSock2.h>
@@ -95,6 +101,11 @@
 		COAP_APPLICATION_JSON = 50
 	} COAP_CONTENT_TYPE;
 
+	typedef enum {
+		BLOCKING = 0,
+		NONBLOCKING =1
+	} SOCKET_BLOCK_NOBLOCK;
+
 	class UDP {
 	public:
 		UDP();
@@ -107,6 +118,7 @@
 		IPAddress remoteIP();
 		uint32_t remotePort();
 		uint8_t SetIPAddress(IPAddress ipaddr);
+		ON_COAP_DATAGRAM_RECEIVED fnPtrCoapDatagramReceived;
 	private:
 		WSADATA _wsa;
 		struct sockaddr_in si_other;
@@ -142,8 +154,6 @@
 
 	class Coap {
 	private:
-		// *_udp;
-		WSADATA _wsa;
 
 		UDP *_udp;
 
@@ -166,6 +176,8 @@
 		bool start();
 		bool start(int port);
 		void response(callback c) { resp = c; }
+
+		friend void CoapDatagramReceived(const unsigned char* buffer, size_t size);
 
 		uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid);
 		uint16_t sendResponse(IPAddress ip, int port, uint16_t messageid, char *payload);
