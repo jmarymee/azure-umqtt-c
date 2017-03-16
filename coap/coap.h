@@ -126,7 +126,7 @@ typedef void(*ON_COAP_DATAGRAM_RECEIVED)(const unsigned char* buffer, size_t siz
 		uint16_t s;
 		int slen, _recvlen;
 		int _port;
-		IPAddress _ipAddress;
+		//IPAddress _ipAddress;
 		char* udpDataBuffer;
 	};
 
@@ -156,8 +156,9 @@ typedef void(*ON_COAP_DATAGRAM_RECEIVED)(const unsigned char* buffer, size_t siz
 	private:
 
 		UDP *_udp;
-
+#if defined(WIN32)
 		std::map<std::string, callback> uri;
+#endif
 
 		//struct sockaddr_in si_other;
 
@@ -176,6 +177,14 @@ typedef void(*ON_COAP_DATAGRAM_RECEIVED)(const unsigned char* buffer, size_t siz
 		bool start();
 		bool start(int port);
 		void response(callback c) { resp = c; }
+
+#if defined(ARDUINO)
+		void server(callback c, String url) { uri.add(c, url); }
+#elif defined(SPARK)
+		void server(callback c, String url) { uri[url] = c; }
+#elif defined(WIN32)
+		void server(callback c, char* url) { uri[url] = c; }
+#endif
 
 		friend void CoapDatagramReceived(const unsigned char* buffer, size_t size);
 

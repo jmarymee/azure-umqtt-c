@@ -24,7 +24,7 @@
 Coap::Coap() 
 {
 	_udp = new UDP();
-	//_udp->fnPtrCoapDatagramReceived = this->CoapDatagramReceived;
+	_udp->fnPtrCoapDatagramReceived = CoapDatagramReceived;
 }
 
 uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) {
@@ -167,6 +167,7 @@ uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageid, char *pa
 void CoapDatagramReceived(const unsigned char * buffer, size_t size)
 {
 	//throw (std::exception("Not implemented"));
+	printf("Data: %s\n", buffer);
 }
 
 uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageid) {
@@ -420,14 +421,15 @@ uint32_t UDP::parsePacket()
 	return _recvlen;
 }
 
+//inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port)
 IPAddress UDP::remoteIP() {
 	IPAddress ipa;
-	ipa.ip = "127.0.0.1";
+	ipa.ip = inet_ntoa(si_other.sin_addr);
 	return ipa;
 }
 
 uint32_t UDP::remotePort() {
-	return 0;
+	return ntohs(si_other.sin_port);
 }
 
 
