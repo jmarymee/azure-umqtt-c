@@ -21,7 +21,7 @@
 //#define BUFLEN 512  //Max length of buffer
 #define PORT 5683   //The port on which to listen for incoming data
 
-Coap::Coap() 
+Coap::Coap()
 {
 	_udp = new UDP();
 	_udp->fnPtrCoapDatagramReceived = CoapDatagramReceived;
@@ -326,9 +326,37 @@ bool Coap::loop()
 #if defined(WIN32)
 				uri[url](packet, _udp->remoteIP(), _udp->remotePort()); //Calls the callback which is part of the URI key/value map
 
-				//This is a 'behind the scenes' ack response to the confirmable message. No payload just a 2.04 and returned messageIS and token.
+				//This is a 'behind the scenes' ack response to the confirmable message. No payload just a 2.04 and returned messageID and token.
 				//https://tools.ietf.org/html/rfc7252#section-4.2
 				sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, NULL, 0, COAP_CHANGED, COAP_NONE, packet.token, packet.tokenlen);
+#endif
+			}
+		}
+		else if (packet.type == COAP_NONCON) {
+			// call endpoint url function
+			std::string url = "";
+			for (int i = 0; i < packet.optionnum; i++) {
+				if (packet.options[i].number == COAP_URI_PATH && packet.options[i].length > 0) {
+					int pilen = packet.options[i].length + 1;
+					std::string urlname((const char*)packet.options[i].buffer, (size_t)packet.options[i].length);
+					//urlname = (char*)malloc(pilen);
+					//memcpy(urlname, packet.options[i].buffer, packet.options[i].length);
+					urlname[packet.options[i].length] = NULL;
+					if (url.length() > 0)
+						url += "/";
+					url += urlname;
+				}
+			}
+#if defined(WIN32)
+			//if (!uri.find(url)) {
+			if (uri.find(url) == uri.end()) {
+#endif
+				//We are sending a response since we don't know this endpoint (2.04) per the RFC even though this isn't a CONFIRM message
+				sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, NULL, 0, COAP_NOT_FOUNT, COAP_NONE, NULL, 0);
+			}
+			else {
+#if defined(WIN32)
+				uri[url](packet, _udp->remoteIP(), _udp->remotePort()); //Calls the callback which is part of the URI key/value map
 #endif
 			}
 		}
@@ -397,10 +425,10 @@ uint32_t UDP::read(uint8_t *buffer, uint32_t packetlen) {
 }
 
 //Currently attempt to read a UDP packet as a blocking call
-uint32_t UDP::parsePacket() 
+uint32_t UDP::parsePacket()
 {
 	_recvlen = 0;
-	udpDataBuffer = (char*) malloc(COAP_MAX_DATAGRAM_SIZE);
+	udpDataBuffer = (char*)malloc(COAP_MAX_DATAGRAM_SIZE);
 	//char buf[BUFLEN];
 	memset(udpDataBuffer, '\0', COAP_MAX_DATAGRAM_SIZE); //Ensure buffer is empty
 
