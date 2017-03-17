@@ -320,16 +320,18 @@ bool Coap::loop()
 			//if (!uri.find(url)) {
 			if (uri.find(url) == uri.end()) {
 #endif
-				sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, NULL, 0,
-					COAP_NOT_FOUNT, COAP_NONE, NULL, 0);
+				sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, NULL, 0, COAP_NOT_FOUNT, COAP_NONE, NULL, 0);
 			}
 			else {
 #if defined(WIN32)
-				uri[url](packet, _udp->remoteIP(), _udp->remotePort());
+				uri[url](packet, _udp->remoteIP(), _udp->remotePort()); //Calls the callback which is part of the URI key/value map
+
+				//This is a 'behind the scenes' ack response to the confirmable message. No payload just a 2.04 and returned messageIS and token.
+				//https://tools.ietf.org/html/rfc7252#section-4.2
+				sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, NULL, 0, COAP_CHANGED, COAP_NONE, packet.token, packet.tokenlen);
 #endif
 			}
 		}
-
 		// next packet
 		packetlen = _udp->parsePacket();
 	}
@@ -364,8 +366,8 @@ UDP::UDP()
 	}
 
 	//Now put into non-blocking mode
-	//u_long iMode = NONBLOCKING; //nonzero for non-blocking, zero (default) for blocking
-	u_long iMode = BLOCKING; //nonzero for non-blocking, zero (default) for blocking
+	u_long iMode = NONBLOCKING; //nonzero for non-blocking, zero (default) for blocking
+	//u_long iMode = BLOCKING; //nonzero for non-blocking, zero (default) for blocking
 	int ccode = ioctlsocket(s, FIONBIO, &iMode);
 }
 
@@ -406,8 +408,11 @@ uint32_t UDP::parsePacket()
 	//try to receive some data, this is a blocking call
 	if (_recvlen == SOCKET_ERROR)
 	{
-		printf("recvfrom() failed with error code : %d", WSAGetLastError());
-		//exit(EXIT_FAILURE);
+		if (WSAGetLastError() != WSAEWOULDBLOCK)
+		{
+			printf("recvfrom() failed with error code : %d", WSAGetLastError());
+			//exit(EXIT_FAILURE);
+		}
 	}
 	else
 	{
