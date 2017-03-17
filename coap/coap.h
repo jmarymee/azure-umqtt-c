@@ -142,9 +142,11 @@ typedef void(*ON_COAP_DATAGRAM_RECEIVED)(const unsigned char* buffer, size_t siz
 		uint8_t type;
 		uint8_t code;
 		uint8_t *token;
-		uint8_t tokenlen;
+		/*uint8_t tokenlen;*/
+		uint16_t tokenlen;
 		uint8_t *payload;
-		uint8_t payloadlen;
+		/*uint8_t payloadlen;*/
+		uint16_t payloadlen;
 		uint16_t messageid;
 
 		uint8_t optionnum;

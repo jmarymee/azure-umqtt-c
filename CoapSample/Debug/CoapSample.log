@@ -1,4 +1,5 @@
 ﻿  coapclientcpp.cpp
 c:\repos\azure-umqtt-c\coapsample\coapclientcpp.cpp(18): warning C4101: 'address': unreferenced local variable
+c:\repos\azure-umqtt-c\coapsample\coapclientcpp.cpp(42): warning C4267: 'initializing': conversion from 'size_t' to 'uint16_t', possible loss of data
   CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.exe
   CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.pdb (Full PDB)

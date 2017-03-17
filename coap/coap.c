@@ -328,7 +328,10 @@ bool Coap::loop()
 
 				//This is a 'behind the scenes' ack response to the confirmable message. No payload just a 2.04 and returned messageID and token.
 				//https://tools.ietf.org/html/rfc7252#section-4.2
-				sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, NULL, 0, COAP_CHANGED, COAP_NONE, packet.token, packet.tokenlen);
+				//TODO: This is set to false so that the GET callback can respond with a piggybacked response versus just an ACK
+				if (false) {
+					sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, NULL, 0, COAP_CHANGED, COAP_NONE, packet.token, packet.tokenlen);
+				}
 #endif
 			}
 		}
