@@ -153,8 +153,8 @@ typedef void(*ON_COAP_DATAGRAM_RECEIVED)(const unsigned char* buffer, size_t siz
 		CoapOption options[MAX_OPTION_NUM];
 	};
 
-	//Callbacks. This one is for PUT/POST/DELETE and another for GET
-	typedef void(*callback)(CoapPacket &, IPAddress, int);
+	//Callbacks definition
+	typedef void(*callback)(CoapPacket &, IPAddress, int, char* &);
 
 	class Coap {
 	private:

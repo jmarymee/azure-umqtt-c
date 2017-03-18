@@ -298,7 +298,8 @@ bool Coap::loop()
 
 		if (packet.type == COAP_ACK) {
 			// call response function
-			resp(packet, _udp->remoteIP(), _udp->remotePort());
+			char* buf;
+			resp(packet, _udp->remoteIP(), _udp->remotePort(), buf);
 
 		}
 		else if (packet.type == COAP_CON) {
@@ -317,19 +318,28 @@ bool Coap::loop()
 				}
 			}
 #if defined(WIN32)
-			//if (!uri.find(url)) {
+			//If we can't find the URL then we return a NOT_FOUND ack
 			if (uri.find(url) == uri.end()) {
 #endif
 				sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, NULL, 0, COAP_NOT_FOUNT, COAP_NONE, NULL, 0);
 			}
 			else {
 #if defined(WIN32)
-				uri[url](packet, _udp->remoteIP(), _udp->remotePort()); //Calls the callback which is part of the URI key/value map
+				char *buf = nullptr;
+				uri[url](packet, _udp->remoteIP(), _udp->remotePort(), buf); //Calls the callback which is part of the URI key/value map
 
 				//This is a 'behind the scenes' ack response to the confirmable message. No payload just a 2.04 and returned messageID and token.
 				//https://tools.ietf.org/html/rfc7252#section-4.2
-				//TODO: This is set to false so that the GET callback can respond with a piggybacked response versus just an ACK
-				sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, NULL, 0, COAP_CHANGED, COAP_NONE, packet.token, packet.tokenlen);
+				if (buf != nullptr)
+				{
+					sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, buf, strlen(buf), COAP_CONTENT, COAP_APPLICATION_JSON, packet.token, packet.tokenlen);
+					free(buf);
+					buf = nullptr;
+				}
+				else
+				{
+					sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, NULL, 0, COAP_CHANGED, COAP_NONE, packet.token, packet.tokenlen);
+				}
 #endif
 			}
 		}
@@ -357,7 +367,26 @@ bool Coap::loop()
 			}
 			else {
 #if defined(WIN32)
-				uri[url](packet, _udp->remoteIP(), _udp->remotePort()); //Calls the callback which is part of the URI key/value map
+				char *buf;
+				uri[url](packet, _udp->remoteIP(), _udp->remotePort(), buf); //Calls the callback which is part of the URI key/value map
+				
+				//This is a response to a non-confirming request (such as a GET). If the buffer is not null then it means we have a payload to send
+				// In that case per the spec we SHOULD respond with another non-confirming message. We are assuming that the client endpoint
+				// Will be listening on the same url as the one is used to request data from us. 
+				//https://tools.ietf.org/html/rfc7252#section-4.2
+				char *uriEnpoint = (char*)url.c_str();
+				if (buf != nullptr)
+				{
+					//sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, buf, strlen(buf), COAP_CONTENT, COAP_APPLICATION_JSON, packet.token, packet.tokenlen);
+					send(_udp->remoteIP(), _udp->remotePort(), uriEnpoint, COAP_NONCON, COAP_PUT, packet.token, packet.tokenlen, (uint8_t*)buf, strlen(buf));
+					free(buf);
+					buf = nullptr;
+				}
+				else
+				{
+					//No response since this was a non-confirming message
+					//sendResponse(_udp->remoteIP(), _udp->remotePort(), packet.messageid, NULL, 0, COAP_CHANGED, COAP_NONE, packet.token, packet.tokenlen);
+				}
 #endif
 			}
 		}
