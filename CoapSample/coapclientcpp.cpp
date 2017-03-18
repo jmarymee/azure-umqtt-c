@@ -32,7 +32,8 @@ int main(void)
 	gCoap = nullptr;
 }
 
-void callback_get_gateway_status(CoapPacket &packet, IPAddress ip, int port) {
+void callback_get_gateway_status(CoapPacket &packet, IPAddress ip, int port) 
+{
 
 	//First we can decided if we want to handle this packet since we are expecting a PUT and got something else
 	if (packet.code != COAP_GET) { return; }
@@ -46,10 +47,17 @@ void callback_get_gateway_status(CoapPacket &packet, IPAddress ip, int port) {
 	return;
 }
 
-void callback_put_light(CoapPacket &packet, IPAddress ip, int port) {
+void callback_put_light(CoapPacket &packet, IPAddress ip, int port) 
+{
 	
 	//First we can decided if we want to handle this packet since we are expecting a PUT and got something else
-	if (packet.type != COAP_PUT) { return; }
+	if (packet.code != COAP_PUT) { return; }
+
+	//Get payload - we are expecting an int from the payload
+	char *payload = (char*)calloc((packet.payloadlen +1), '\0');
+	if (payload == nullptr) { return; } //out of memory
+	memcpy((char*)payload, packet.payload, packet.payloadlen);
+	int isOn = atoi((char*)payload);
 
 	//Do our code to set the light switch!
 
