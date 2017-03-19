@@ -254,6 +254,7 @@ bool Coap::loop()
 {
 	uint8_t buffer[COAP_MAX_DATAGRAM_SIZE];
 	int32_t packetlen = _udp->parsePacket();
+	_udp->parseClientPacket();
 
 	while (packetlen > 0) {
 		packetlen = _udp->read(buffer, packetlen >= COAP_MAX_DATAGRAM_SIZE ? COAP_MAX_DATAGRAM_SIZE : packetlen);
@@ -567,6 +568,42 @@ uint32_t UDP::parsePacket()
 	}
 
 	return _recvlen;
+}
+
+//Currently attempt to read a UDP packet as a blocking call
+uint32_t UDP::parseClientPacket()
+{
+	int receiveLen = 0;
+	char *rbuf = (char*)malloc(COAP_MAX_DATAGRAM_SIZE);
+	memset(rbuf, '\0', COAP_MAX_DATAGRAM_SIZE); //Ensure buffer is empty
+	memset((char *)&cli_other, 0, sizeof(cli_other));
+	int cliLen = sizeof(cli_other);
+
+	receiveLen = recvfrom(clientSock, rbuf, COAP_MAX_DATAGRAM_SIZE, 0, (struct sockaddr *) &cli_other, &cliLen);
+	//receiveLen = recv(clientSock, rbuf, COAP_MAX_DATAGRAM_SIZE, 0);
+	//try to receive some data, this is a blocking call
+	if (receiveLen == SOCKET_ERROR)
+	{
+		if (WSAGetLastError() != WSAEWOULDBLOCK)
+		{
+			printf("recvfrom() failed with error code : %d", WSAGetLastError());
+			//exit(EXIT_FAILURE);
+		}
+		else if (WSAGetLastError() == WSAEWOULDBLOCK)
+		{
+			printf("waiting for client receieve : %d", WSAGetLastError());
+		}
+	}
+	else
+	{
+		//print details of the client/peer and the data received
+		printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
+		printf("Data: %s\n", rbuf);
+
+		this->fnPtrCoapDatagramReceived((const unsigned char*)rbuf, receiveLen); //Calls the function prt friend function
+	}
+
+	return receiveLen;
 }
 
 //inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port)

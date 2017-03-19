@@ -115,7 +115,8 @@ typedef void(*ON_COAP_DATAGRAM_RECEIVED)(const unsigned char* buffer, size_t siz
 		uint16_t sendResponseDatagram(IPAddress addr, int port, char *buffer, int len);
 		uint16_t sendClientDatagram(IPAddress addr, int port, char *buffer, int len);
 		//uint16_t sendPacket(CoapPacket &packet, IPAddress ip, int port);
-		uint32_t parsePacket();
+		uint32_t parsePacket(); //Used to receive packets sent to server
+		uint32_t parseClientPacket(); //Used to read responses from client sends
 		IPAddress remoteIP();
 		uint32_t remotePort();
 		uint8_t SetIPAddress(IPAddress ipaddr);
