@@ -112,7 +112,8 @@ typedef void(*ON_COAP_DATAGRAM_RECEIVED)(const unsigned char* buffer, size_t siz
 		~UDP();
 		uint32_t read(uint8_t *buffer, uint32_t packetlen);
 		//sendto(s, (char*)buffer, packetSize, 0, (struct sockaddr *) &si_other, slen)
-		uint16_t sendDatagram(char *buffer, uint16_t bufferLen, uint16_t flags, uint16_t toLen);
+		uint16_t sendResponseDatagram(IPAddress addr, int port, char *buffer, int len);
+		uint16_t sendClientDatagram(IPAddress addr, int port, char *buffer, int len);
 		//uint16_t sendPacket(CoapPacket &packet, IPAddress ip, int port);
 		uint32_t parsePacket();
 		IPAddress remoteIP();
@@ -122,11 +123,13 @@ typedef void(*ON_COAP_DATAGRAM_RECEIVED)(const unsigned char* buffer, size_t siz
 	private:
 		WSADATA _wsa;
 		struct sockaddr_in si_other;
-		struct sockaddr_in server;
-		uint16_t s;
+		struct sockaddr_in server; //For local listens
+		struct sockaddr_in client;
+		struct sockaddr_in cli_other;
+		SOCKET serverSock;
+		SOCKET clientSock;
 		int slen, _recvlen;
 		int _port;
-		//IPAddress _ipAddress;
 		char* udpDataBuffer;
 	};
 
