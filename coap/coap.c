@@ -174,7 +174,8 @@ uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageid, char *pa
 void CoapDatagramReceived(const unsigned char * buffer, size_t size)
 {
 	//throw (std::exception("Not implemented"));
-	printf("In Friend function. Data: %s\n", buffer);
+
+	printf("In Friend function. Data: %s\n", buffer+6);
 }
 
 uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageid) {
@@ -253,8 +254,10 @@ uint16_t Coap::get(IPAddress ip, int port, char *url) {
 bool Coap::loop()
 {
 	uint8_t buffer[COAP_MAX_DATAGRAM_SIZE];
-	int32_t packetlen = _udp->parsePacket();
-	_udp->parseClientPacket();
+	//int32_t packetlen = _udp->parsePacket();
+	int32_t packetlen = _udp->parseClientPacket();
+
+	
 
 	while (packetlen > 0) {
 		packetlen = _udp->read(buffer, packetlen >= COAP_MAX_DATAGRAM_SIZE ? COAP_MAX_DATAGRAM_SIZE : packetlen);
@@ -304,7 +307,8 @@ bool Coap::loop()
 			}
 		}
 
-		if (packet.type == COAP_ACK) {
+		if (packet.type == COAP_ACK) 
+		{
 			// call response function
 			char* buf;
 			resp(packet, _udp->remoteIP(), _udp->remotePort(), buf);
@@ -534,13 +538,12 @@ uint16_t UDP::sendClientDatagram(IPAddress addr, int port, char *buffer, int len
 
 uint32_t UDP::read(uint8_t *buffer, uint32_t packetlen) {
 	if (udpDataBuffer == nullptr) { return -1; } //No data waiting. ParsePacket hasn't been called yet
-	memcpy((char*)buffer, udpDataBuffer, _recvlen);
+	memcpy((char*)buffer, udpDataBuffer, packetlen);
 	free(udpDataBuffer);
 	udpDataBuffer = nullptr;
-	return _recvlen;
+	return packetlen;
 }
 
-//Currently attempt to read a UDP packet as a blocking call
 uint32_t UDP::parsePacket()
 {
 	_recvlen = 0;
@@ -597,10 +600,10 @@ uint32_t UDP::parseClientPacket()
 	else
 	{
 		//print details of the client/peer and the data received
-		printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
-		printf("Data: %s\n", rbuf);
+		//printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
+		//printf("Data: %s\n", rbuf);
 
-		this->fnPtrCoapDatagramReceived((const unsigned char*)rbuf, receiveLen); //Calls the function prt friend function
+		//this->fnPtrCoapDatagramReceived((const unsigned char*)rbuf, receiveLen); //Calls the function prt friend function
 	}
 
 	return receiveLen;
