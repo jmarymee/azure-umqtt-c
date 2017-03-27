@@ -141,11 +141,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="coap.h" />
+    <ClInclude Include="udp.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="coap.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
     </ClCompile>
+    <ClCompile Include="udp.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
