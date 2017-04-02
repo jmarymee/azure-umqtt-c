@@ -17,14 +17,14 @@ int main(void)
 	
 	IPAddress address;
 	//address.ip = "10.121.209.99";
-	address.ip = "10.0.0.5";
+	address.ip = "127.0.0.1";
 	//coap->get(address, 5683, "temp");
 	//coap->put(address, 5683, "light", "1");
 	while (!_kbhit())
 	{
 
 		coap->loop();
-		coap->get(address, 5683, "temp");
+		coap->get(address, 5683, "helloworld");
 		printf("Sleeping...\n");
 		Sleep(2000);
 	}
