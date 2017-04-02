@@ -1,6 +1,4 @@
 ﻿  coapclientcpp.cpp
-c:\repos\azure-umqtt-c\coapsample\coapclientcpp.cpp(39): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 1 has type 'uint16_t *'
-c:\repos\azure-umqtt-c\coapsample\coapclientcpp.cpp(45): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 1 has type 'uint16_t *'
-c:\repos\azure-umqtt-c\coapsample\coapclientcpp.cpp(75): warning C4267: 'initializing': conversion from 'size_t' to 'uint16_t', possible loss of data
+c:\repos\azure-umqtt-c\coapsample\coapclientcpp.cpp(72): warning C4267: 'initializing': conversion from 'size_t' to 'uint16_t', possible loss of data
   CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.exe
   CoapSample.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\CoapSample.pdb (Full PDB)

@@ -32,13 +32,13 @@ int main(void)
 		if (isLight) 
 		{
 			messageID = coap->put(address, 5683, "light", "0");
-			printf("Outbound MessageID: %d\n", &messageID);
+			printf("Outbound MessageID: %d\n", messageID);
 			isLight = false;
 		}
 		else
 		{
 			messageID = coap->put(address, 5683, "light", "1");
-			printf("Outbound MessageID: %d\n", &messageID);
+			printf("Outbound MessageID: %d\n", messageID);
 			isLight = true;
 		}
 		printf("Sleeping...\n");
