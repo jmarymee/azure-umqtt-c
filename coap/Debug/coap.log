@@ -1,5 +1,5 @@
 ﻿  coap.c
-c:\repos\azure-umqtt-c\coap\coap.c(80): warning C4333: '>>': right shift by too large amount, data loss
-c:\repos\azure-umqtt-c\coap\coap.c(140): warning C4267: '=': conversion from 'size_t' to 'uint8_t', possible loss of data
-c:\repos\azure-umqtt-c\coap\coap.c(393): warning C4244: 'argument': conversion from 'uint16_t' to 'uint8_t', possible loss of data
+c:\repos\azure-umqtt-c\coap\coap.c(81): warning C4333: '>>': right shift by too large amount, data loss
+c:\repos\azure-umqtt-c\coap\coap.c(141): warning C4267: '=': conversion from 'size_t' to 'uint8_t', possible loss of data
+c:\repos\azure-umqtt-c\coap\coap.c(395): warning C4244: 'argument': conversion from 'uint16_t' to 'uint8_t', possible loss of data
   coap.vcxproj -> C:\repos\azure-umqtt-c\cmake\Debug\coap.lib

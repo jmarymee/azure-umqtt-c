@@ -15,6 +15,7 @@
 #include <cstring>
 
 #include <inttypes.h>
+#include "udp.h"
 #include "coap.h"
 
 #define SERVER "127.0.0.1"  //ip address of udp server
@@ -23,8 +24,8 @@
 
 Coap::Coap()
 {
-	_udp = new UDP();
-	_udp->fnPtrCoapDatagramReceived = CoapDatagramReceived;
+	_udp = new UDP(PORT);
+	_udp->fnPtrDatagramReceived = CoapDatagramReceived;
 }
 
 uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port) 
@@ -108,7 +109,7 @@ uint16_t Coap::sendPacket(CoapPacket &packet, IPAddress ip, int port)
 	}
 	else
 	{
-		if (_udp->sendClientDatagram(ip, port, (char*)buffer, packetSize) == SOCKET_ERROR)
+		if (_udp->sendResponseDatagram(ip, port, (char*)buffer, packetSize) == SOCKET_ERROR)
 		{
 			printf("sendResponseDatagram() failed with error code : %d", WSAGetLastError());
 		}
@@ -175,7 +176,7 @@ void CoapDatagramReceived(const unsigned char * buffer, size_t size)
 {
 	//throw (std::exception("Not implemented"));
 
-	printf("In Friend function. Data: %s\n", buffer+6);
+	//printf("In Friend function. Data: %s\n", buffer+5);
 }
 
 uint16_t Coap::sendResponse(IPAddress ip, int port, uint16_t messageid) {
@@ -239,6 +240,7 @@ int Coap::parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf
 	return 0;
 }
 
+//These PUTs and GETs used a CONFIRMING (COAP_CON) Packet response. But we don't have backoff and retry implemented yet so this is not fully implmented
 uint16_t Coap::put(IPAddress ip, int port, char *url, char *payload) {
 	return this->send(ip, port, url, COAP_CON, COAP_PUT, NULL, 0, (uint8_t *)payload, strlen(payload));
 }
@@ -251,11 +253,11 @@ uint16_t Coap::get(IPAddress ip, int port, char *url) {
 	return this->send(ip, port, url, COAP_CON, COAP_GET, NULL, 0, NULL, 0);
 }
 
+
 bool Coap::loop()
 {
 	uint8_t buffer[COAP_MAX_DATAGRAM_SIZE];
-	//int32_t packetlen = _udp->parsePacket();
-	int32_t packetlen = _udp->parseClientPacket();
+	int32_t packetlen = _udp->parsePacket(COAP_MAX_DATAGRAM_SIZE);
 
 	
 
@@ -266,7 +268,7 @@ bool Coap::loop()
 
 		// parse coap packet header
 		if (packetlen < COAP_HEADER_SIZE || (((buffer[0] & 0xC0) >> 6) != 1)) {
-			packetlen = _udp->parsePacket();
+			packetlen = _udp->parsePacket(COAP_MAX_DATAGRAM_SIZE);
 			continue;
 		}
 
@@ -279,7 +281,7 @@ bool Coap::loop()
 		if (packet.tokenlen == 0)  packet.token = NULL;
 		else if (packet.tokenlen <= 8)  packet.token = buffer + 4;
 		else {
-			packetlen = _udp->parsePacket();
+			packetlen = _udp->parsePacket(COAP_MAX_DATAGRAM_SIZE);
 			continue;
 		}
 
@@ -403,221 +405,10 @@ bool Coap::loop()
 			}
 		}
 		// next packet
-		packetlen = _udp->parsePacket();
+		packetlen = _udp->parsePacket(COAP_MAX_DATAGRAM_SIZE);
 	}
 
 	return true;
-}
-
-
-//These are the routines to read and send UDP Datagrams
-UDP::UDP()
-{
-	WSAData wsa;
-	WSAStartup(MAKEWORD(2, 2), &wsa);
-	this->_wsa = wsa;
-	slen = sizeof(si_other);
-
-	int ccode; //Err codes
-	u_long iMode; //Used for block/nonblock modes
-
-	//This is used to listen on the COAP port (5683) and respond to requests such as GETs
-	if ((serverSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
-	{
-		printf("Error opening client socket : %d", WSAGetLastError());
-		exit(EXIT_FAILURE);
-	}
-
-	//setup address structure for data/info on the other end. This gives us info about the other end (IP Address/Port)
-	memset((char *)&si_other, 0, sizeof(si_other)); //Set to zeros for safety
-
-	//Setup our local info
-	memset((char*)&server, 0, sizeof(server));
-	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = INADDR_ANY;
-	server.sin_port = htons(PORT); //COAP Port
-
-	//Now bind the socket for listens
-	if (bind(serverSock, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
-	{
-		printf("Server bind failed with error code : %d", WSAGetLastError());
-		//exit(EXIT_FAILURE);
-	}
-
-	//Now put into non-blocking mode
-	iMode = NONBLOCKING; //nonzero for non-blocking, zero (default) for blocking
-	//u_long iMode = BLOCKING; //nonzero for non-blocking, zero (default) for blocking
-	ccode = ioctlsocket(serverSock, FIONBIO, &iMode);
-
-	//This is used to initiate requests to other COAP peers
-	if ((clientSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET)
-	{
-		printf("Error opening client socket : %d", WSAGetLastError());
-		exit(EXIT_FAILURE);
-	}
-
-	//setup address structure for data/info on the other end. This gives us info about the other end (IP Address/Port)
-	memset((char *)&cli_other, 0, sizeof(cli_other)); //Set to zeros for safety
-
-	//Setup our local info
-	memset((char*)&client, 0, sizeof(client));
-	client.sin_family = AF_INET;
-	client.sin_addr.s_addr = INADDR_ANY;
-	client.sin_port = htons(0); //We will take ANY open port
-
-	//Now bind the socket for listens
-	if (bind(clientSock, (struct sockaddr *)&client, sizeof(client)) == SOCKET_ERROR)
-	{
-		printf("Client bind failed with error code : %d", WSAGetLastError());
-		//exit(EXIT_FAILURE);
-	}
-
-	//Now put into non-blocking mode
-	iMode = NONBLOCKING; //nonzero for non-blocking, zero (default) for blocking
-	//u_long iMode = BLOCKING; //nonzero for non-blocking, zero (default) for blocking
-	ccode = ioctlsocket(clientSock, FIONBIO, &iMode);
-}
-
-UDP::~UDP()
-{
-	closesocket(serverSock);
-	closesocket(clientSock);
-	WSACleanup(); //Cleans up the Winsock2 stuff
-}
-
-uint8_t UDP::SetIPAddress(IPAddress ipaddr)
-{
-	//si_other.sin_addr.S_un.S_addr = inet_addr(ipaddr.ip);
-	return 0;
-}
-
-uint16_t UDP::sendResponseDatagram(IPAddress addr, int port, char *buffer, int len)
-{
-
-	//setup address structure
-	memset((char *)&si_other, 0, sizeof(si_other));
-	si_other.sin_family = AF_INET;
-	si_other.sin_port = htons(port);
-	si_other.sin_addr.S_un.S_addr = inet_addr(addr.ip);
-
-	if (sendto(serverSock, (char*)buffer, len, 0, (struct sockaddr *) &si_other, sizeof(si_other)) == SOCKET_ERROR)
-	{
-		printf("sendto failed with error: %d\n", WSAGetLastError());
-		return -1;
-	}
-	return 0;
-}
-
-//Test routine ONLY!
-uint16_t UDP::sendClientDatagram(IPAddress addr, int port, char *buffer, int len)
-{
-	//uint16_t cSock = INVALID_SOCKET;
-	//struct sockaddr_in cli_other;
-	//int tolen = sizeof(cli_other);
-	//cSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-	//setup address structure
-	memset((char *)&cli_other, 0, sizeof(cli_other));
-	cli_other.sin_family = AF_INET;
-	cli_other.sin_port = htons(port);
-	cli_other.sin_addr.S_un.S_addr = inet_addr(addr.ip);
-
-	//setup address structure
-	//memset((char *)&si_other, 0, sizeof(si_other)); //Reuse the target structure
-	//si_other.sin_family = AF_INET;
-	//si_other.sin_port = htons(5683);
-	//si_other.sin_addr.S_un.S_addr = inet_addr("10.0.0.66");
-
-	int sockErr = sendto(clientSock, buffer, len, 0, (struct sockaddr *) &cli_other, sizeof(cli_other));
-	if (sockErr == SOCKET_ERROR)
-	{
-		printf("sendto failed with error: %d\n", WSAGetLastError());
-	}
-	return sockErr;
-}
-
-uint32_t UDP::read(uint8_t *buffer, uint32_t packetlen) {
-	if (udpDataBuffer == nullptr) { return -1; } //No data waiting. ParsePacket hasn't been called yet
-	memcpy((char*)buffer, udpDataBuffer, packetlen);
-	free(udpDataBuffer);
-	udpDataBuffer = nullptr;
-	return packetlen;
-}
-
-uint32_t UDP::parsePacket()
-{
-	_recvlen = 0;
-	udpDataBuffer = (char*)malloc(COAP_MAX_DATAGRAM_SIZE);
-	//char buf[BUFLEN];
-	memset(udpDataBuffer, '\0', COAP_MAX_DATAGRAM_SIZE); //Ensure buffer is empty
-
-	_recvlen = recvfrom(serverSock, udpDataBuffer, COAP_MAX_DATAGRAM_SIZE, 0, (struct sockaddr *) &si_other, &slen);
-	//try to receive some data, this is a blocking call
-	if (_recvlen == SOCKET_ERROR)
-	{
-		if (WSAGetLastError() != WSAEWOULDBLOCK)
-		{
-			printf("recvfrom() failed with error code : %d", WSAGetLastError());
-			//exit(EXIT_FAILURE);
-		}
-	}
-	else
-	{
-		//print details of the client/peer and the data received
-		printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
-		printf("Data: %s\n", udpDataBuffer);
-
-		//this->fnPtrCoapDatagramReceived((const unsigned char*)udpDataBuffer, _recvlen); //Calls the function prt friend function
-	}
-
-	return _recvlen;
-}
-
-//Currently attempt to read a UDP packet as a blocking call
-uint32_t UDP::parseClientPacket()
-{
-	int receiveLen = 0;
-	char *rbuf = (char*)malloc(COAP_MAX_DATAGRAM_SIZE);
-	memset(rbuf, '\0', COAP_MAX_DATAGRAM_SIZE); //Ensure buffer is empty
-	memset((char *)&cli_other, 0, sizeof(cli_other));
-	int cliLen = sizeof(cli_other);
-
-	receiveLen = recvfrom(clientSock, rbuf, COAP_MAX_DATAGRAM_SIZE, 0, (struct sockaddr *) &cli_other, &cliLen);
-	//receiveLen = recv(clientSock, rbuf, COAP_MAX_DATAGRAM_SIZE, 0);
-	//try to receive some data, this is a blocking call
-	if (receiveLen == SOCKET_ERROR)
-	{
-		if (WSAGetLastError() != WSAEWOULDBLOCK)
-		{
-			printf("recvfrom() failed with error code : %d", WSAGetLastError());
-			//exit(EXIT_FAILURE);
-		}
-		else if (WSAGetLastError() == WSAEWOULDBLOCK)
-		{
-			printf("waiting for client receieve : %d", WSAGetLastError());
-		}
-	}
-	else
-	{
-		//print details of the client/peer and the data received
-		//printf("Received packet from %s:%d\n", inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port));
-		//printf("Data: %s\n", rbuf);
-
-		//this->fnPtrCoapDatagramReceived((const unsigned char*)rbuf, receiveLen); //Calls the function prt friend function
-	}
-
-	return receiveLen;
-}
-
-//inet_ntoa(si_other.sin_addr), ntohs(si_other.sin_port)
-IPAddress UDP::remoteIP() {
-	IPAddress ipa;
-	ipa.ip = inet_ntoa(si_other.sin_addr);
-	return ipa;
-}
-
-uint32_t UDP::remotePort() {
-	return ntohs(si_other.sin_port);
 }
 
 
