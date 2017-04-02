@@ -240,6 +240,7 @@ int Coap::parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf
 	return 0;
 }
 
+//These PUTs and GETs used a CONFIRMING (COAP_CON) Packet response. But we don't have backoff and retry implemented yet so this is not fully implmented
 uint16_t Coap::put(IPAddress ip, int port, char *url, char *payload) {
 	return this->send(ip, port, url, COAP_CON, COAP_PUT, NULL, 0, (uint8_t *)payload, strlen(payload));
 }
@@ -251,6 +252,7 @@ uint16_t Coap::put(IPAddress ip, int port, char *url, char *payload, int payload
 uint16_t Coap::get(IPAddress ip, int port, char *url) {
 	return this->send(ip, port, url, COAP_CON, COAP_GET, NULL, 0, NULL, 0);
 }
+
 
 bool Coap::loop()
 {

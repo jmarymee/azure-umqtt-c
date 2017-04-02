@@ -17,21 +17,17 @@ int main(void)
 	coap->server(callback_put_light, "light");
 	coap->server(callback_get_gateway_status, "temp");
 
-
 	bool isLight = false;
 
 	uint16_t messageID = 0;
 	
 	IPAddress address;
 	address.ip = "10.0.0.40";
-	//messageID = coap->get(address, 5683, "temp");
-	//printf("Outbound MessageID: %d\n", messageID);
-	//coap->put(address, 5683, "light", "0");
 	while (!_kbhit())
 	{
 
 		coap->loop();
-		messageID = coap->get(address, 5683, "temp");
+		messageID = coap->get(address, 5683, "time");
 		printf("Outbound MessageID: %d\n", messageID);
 		if (isLight) 
 		{
@@ -59,6 +55,7 @@ void callback_for_client_reqs(CoapPacket &packet, IPAddress ip, int port, char* 
 	printf("InBound MessageID:  %d | Data: %s\n\n", packet.messageid, data);
 	//printf("MessageID: %d\n", packet.messageid);
 	free(data);
+	data = nullptr;
 }
 
 //This is an example of a GET requested to us as a CONFIRMABLE message. Note we will return the payload as a pointer to a buffer. 
