@@ -3,34 +3,62 @@
 #include <coap.h>
 #include <conio.h>
 
+//These are both server functions. We will wait a COAP client to ping us and we will respond
 void callback_get_gateway_status(CoapPacket &packet, IPAddress ip, int port, char* &buffer);
 void callback_put_light(CoapPacket &packet, IPAddress ip, int port, char* &buffer);
 
-//Coap *gCoap; //This is used so that GETS can send a response to the requesting client without requiring the instantiation of another Coap Object
+//This is an example of us making a GET (client->Server) and awaiting a response
+void callback_for_client_reqs(CoapPacket &packet, IPAddress ip, int port, char* &buffer);
 
 int main(void)
 {
 	Coap* coap = new Coap();
-	//gCoap = coap;
+	coap->response(callback_for_client_reqs);
 	coap->server(callback_put_light, "light");
 	coap->server(callback_get_gateway_status, "temp");
+
+
+	bool isLight = false;
+
+	uint16_t messageID = 0;
 	
 	IPAddress address;
-	//address.ip = "10.121.209.99";
-	address.ip = "127.0.0.1";
-	//coap->get(address, 5683, "temp");
-	//coap->put(address, 5683, "light", "1");
+	address.ip = "10.0.0.40";
+	//messageID = coap->get(address, 5683, "temp");
+	//printf("Outbound MessageID: %d\n", messageID);
+	//coap->put(address, 5683, "light", "0");
 	while (!_kbhit())
 	{
 
 		coap->loop();
-		coap->get(address, 5683, "helloworld");
+		messageID = coap->get(address, 5683, "temp");
+		printf("Outbound MessageID: %d\n", messageID);
+		if (isLight) 
+		{
+			messageID = coap->put(address, 5683, "light", "0");
+			printf("Outbound MessageID: %d\n", &messageID);
+			isLight = false;
+		}
+		else
+		{
+			messageID = coap->put(address, 5683, "light", "1");
+			printf("Outbound MessageID: %d\n", &messageID);
+			isLight = true;
+		}
 		printf("Sleeping...\n");
 		Sleep(2000);
 	}
 	delete coap; //Cleans up resources like WinSock
 	coap = nullptr;
-	//gCoap = nullptr;
+}
+
+void callback_for_client_reqs(CoapPacket &packet, IPAddress ip, int port, char* &buffer)
+{
+	char *data =  (char*)calloc(packet.payloadlen+1, sizeof(char));
+	memcpy(data, packet.payload, packet.payloadlen);
+	printf("InBound MessageID:  %d | Data: %s\n\n", packet.messageid, data);
+	//printf("MessageID: %d\n", packet.messageid);
+	free(data);
 }
 
 //This is an example of a GET requested to us as a CONFIRMABLE message. Note we will return the payload as a pointer to a buffer. 
@@ -52,6 +80,8 @@ void callback_get_gateway_status(CoapPacket &packet, IPAddress ip, int port, cha
 	buffer = (char*)malloc(len + 1);
 	memcpy(buffer, wxJSON, len);
 
+	printf("Outbound MessageID: %d\n", packet.messageid);
+
 	return;
 }
 
@@ -68,6 +98,8 @@ void callback_put_light(CoapPacket &packet, IPAddress ip, int port, char * &buff
 	int isOn = atoi((char*)payload);
 
 	//Do our code to set the light switch!
+
+	printf("Outbound MessageID: %d\n", packet.messageid);
 
 	return;
 }
